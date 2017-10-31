@@ -1,4 +1,6 @@
 import socket
+from Crypto import Random
+import encrypt
 
 host = ''
 port = 5680
@@ -23,9 +25,14 @@ def setupConnection():
 
 def dataTransfer(connection):
     data = connection.recv(1024)
-    data = data.decode('UTF-8', 'strict')
-    print("Decode string: " + data)
+    #data = data.decode('UTF-8', 'strict')
+    print(data)
     return data
     connection.close()
+
+def receiveIV(connection):
+    iv = connection.recv(2048)
+    print("Received: " + iv)
+    encrypt.iv = iv
 
 s = setupServer()
