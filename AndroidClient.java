@@ -1,93 +1,160 @@
+package com.example.ksundararajan.cs3235;
+
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
+import android.view.View;
+import android.view.Menu;
+import android.view.MenuItem;
+
 import java.io.*;
 import java.net.*;
 import java.util.Date;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import javax.crypto.*;
+import java.util.Base64;
+
+import java.security.Key;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
+import java.security.spec.AlgorithmParameterSpec;
+import java.security.InvalidAlgorithmParameterException;
+
+import javax.crypto.*;
 import javax.crypto.spec.SecretKeySpec;
 import javax.crypto.spec.IvParameterSpec;
-import java.security.SecureRandom;
 
-public class AndroidClient {
-    public static void main(String argv[]) throws Exception {
+public class SendMessage extends AppCompatActivity {
 
-        Socket clientSocket = new Socket("localhost", 65535);
-        DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
-        BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_send_message);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+    }
 
-        DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-        String date = dateFormat.format(new Date());
-        System.out.println(date);
-        KeyGenerator KeyGen = null;
+    public void sendMessage(View view) throws IOException, InvalidAlgorithmParameterException {
+        new ConnectToPi().execute("Do this");
+    }
 
-        try {
-            KeyGen = KeyGenerator.getInstance("AES");
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_send_message, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
         }
-        KeyGen.init(128);
 
-        SecretKey SecKey = KeyGen.generateKey();
-
-        //String encodedKey = Base64.getEncoder().encodeToString(SecKey.getEncoded());
-        // decode the base64 encoded string
-        //byte[] decodedKey = Base64.getDecoder().decode(encodedKey);
-        // rebuild key using SecretKeySpec
-        //SecretKey originalKey = new SecretKeySpec(decodedKey, 0, decodedKey.length, "AES");
-
-        // build the initialization vector (randomly).
-        //SecureRandom random = new SecureRandom();
-        //generate random 16 byte IV AES is always 16 bytes
-        // byte iv[] = new byte[16];
-        //random.nextBytes(iv);
-
-        // hardcode IV
-        String IV = "This is a test!!";
-        byte iv[] = IV.getBytes();
-
-        IvParameterSpec ivspec = new IvParameterSpec(iv);
+        return super.onOptionsItemSelected(item);
+    }
+}
 
 
-        Cipher AesCipher = null;
+class ConnectToPi extends AsyncTask<String, Void, Void> {
+    private static final String ENCRYPTION_KEY = "areyouokareyouok";
+    private static final String ENCRYPTION_IV = "0000000000000000";
 
+    @Override
+    protected Void doInBackground(String... example) {
+        Socket clientSocket = null;
         try {
-            String plaintext = date;
+            clientSocket = new Socket("xx.xx.xx.xx", 65535);
+            DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
+            BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
-            AesCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-            AesCipher.init(Cipher.ENCRYPT_MODE, SecKey, ivspec);
+            DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+            String date = dateFormat.format(new Date());
+            System.out.println(date);
 
-            String cipherText = Base64.getEncoder().encodeToString(AesCipher.doFinal(plaintext.getBytes("UTF-8")));
-            //System.out.println("The secret key is: " + SecKey);
-            System.out.println("The ciphertext is: " + cipherText);
+            Cipher AesCipher = null;
 
-            AesCipher.init(Cipher.DECRYPT_MODE, SecKey, ivspec);
-            String decryptedText = new String(AesCipher.doFinal(Base64.getDecoder().decode(cipherText)));
-            System.out.println("The plaintext is: " + decryptedText);
-
-            String receive;
             try {
-                outToServer.writeUTF(decryptedText + '\n');
-            } catch (Exception e) {
-                System.out.println(e);
+                String plaintext = date;
+
+                AesCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+                try {
+                    AesCipher.init(Cipher.ENCRYPT_MODE, makeKey(), makeIv());
+                } catch (InvalidAlgorithmParameterException e) {
+                    e.printStackTrace();
+                }
+
+                String cipherText = null;
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    cipherText = Base64.getEncoder().encodeToString(AesCipher.doFinal(plaintext.getBytes("UTF-8")));
+                }
+                System.out.println("The ciphertext is: " + cipherText);
+
+                try {
+                    AesCipher.init(Cipher.DECRYPT_MODE, makeKey(), makeIv());
+                } catch (InvalidAlgorithmParameterException e) {
+                    e.printStackTrace();
+                }
+                String decryptedText = null;
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    decryptedText = new String(AesCipher.doFinal(Base64.getDecoder().decode(cipherText)));
+                }
+                System.out.println("The plaintext is: " + decryptedText);
+
+                String receive;
+                try {
+                    outToServer.writeUTF(cipherText + '\n');
+                } catch (Exception e) {
+                    System.out.println(e);
+                }
+
+                receive = inFromServer.readLine();
+                System.out.println(receive);
+                clientSocket.close();
+
+            } catch (NoSuchAlgorithmException e) {
+                e.printStackTrace();
+            } catch (NoSuchPaddingException e) {
+                e.printStackTrace();
+            } catch (BadPaddingException e) {
+                e.printStackTrace();
+            } catch (IllegalBlockSizeException e) {
+                e.printStackTrace();
+            } catch (InvalidKeyException e) {
+                e.printStackTrace();
             }
 
-            receive = inFromServer.readLine();
-            System.out.println(receive);
-            clientSocket.close();
-
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (NoSuchPaddingException e) {
-            e.printStackTrace();
-        } catch (BadPaddingException e) {
-            e.printStackTrace();
-        } catch (IllegalBlockSizeException e) {
-            e.printStackTrace();
-        } catch (InvalidKeyException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
+
+        return null;
+    }
+
+    static Key makeKey() {
+        try {
+            byte[] key = ENCRYPTION_KEY.getBytes("UTF-8");
+            return new SecretKeySpec(key, "AES");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    static AlgorithmParameterSpec makeIv() {
+        try {
+            return new IvParameterSpec(ENCRYPTION_IV.getBytes("UTF-8"));
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }
