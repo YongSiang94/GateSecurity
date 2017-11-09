@@ -28,7 +28,7 @@ def generateIV():
     return iv
 
 generateIV()
-print(iv)
+print('IV generated for this session is: ' + iv)
 #ciphertext = encrypt(user_input)
 #plaintext = decrypt(ciphertext)
 
