@@ -5,7 +5,7 @@ import encrypt
 import time
 
 socketPort = 17177
-socketIP = '172.25.97.251'
+socketIP = '192.168.86.192'
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.connect((socketIP, socketPort))

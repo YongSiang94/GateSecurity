@@ -2,6 +2,7 @@ import base64
 import os
 from Crypto.Cipher import AES
 from Crypto import Random
+import datetime
 
 key = '9369BE75CA85FA4CF63A9C581AD35646'
 iv = ''
@@ -24,6 +25,7 @@ def decrypt(encrypted):
 def generateIV():
     global BS
     global iv
+
     iv = Random.new().read(BS)
     print('IV generated for this session is ' + iv)
     return iv
