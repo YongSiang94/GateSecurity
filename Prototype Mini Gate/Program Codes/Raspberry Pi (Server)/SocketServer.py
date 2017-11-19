@@ -1,9 +1,10 @@
 import socket
 from Crypto import Random
 import encrypt
+import time
 
-host = '192.168.86.184'
-port = 7777
+host = '172.25.97.251'
+port = 17177
 
 def setupServer():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

@@ -25,10 +25,9 @@ def generateIV():
     global BS
     global iv
     iv = Random.new().read(BS)
+    print('IV generated for this session is ' + iv)
     return iv
 
-generateIV()
-print('IV generated for this session is: ' + iv)
 #ciphertext = encrypt(user_input)
 #plaintext = decrypt(ciphertext)
 

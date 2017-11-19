@@ -2,7 +2,6 @@ import time
 import RPi.GPIO as GPIO
 
 GPIO.setmode(GPIO.BOARD)
-GPIO.setwarnings(False)
     
 # Corresponding to INT1, INT2, INT3, and INT4
 RPiPins = [7, 11, 13, 15]
@@ -46,17 +45,19 @@ def open():
 
     GPIO.setmode(GPIO.BOARD)
     setPins()
-    for x in range(0, numOfRevolution):
-        transverseSequence()
+    try:
+    	for x in range(0, numOfRevolution):
+            transverseSequence()
 	
-        # Anti-clockwise motion to open
-        indexOfStepSequence -= 1
+            # Anti-clockwise motion to open
+            indexOfStepSequence -= 1
 	
-        if (indexOfStepSequence < 0):
-            indexOfStepSequence = 7
+            if (indexOfStepSequence < 0):
+                indexOfStepSequence = 7
 
-        time.sleep(speedOfRevolution)
-    GPIO.cleanup()
+            time.sleep(speedOfRevolution)
+    finally:
+	GPIO.cleanup();    
 
 def close():
     global indexOfStepSequence
@@ -65,15 +66,16 @@ def close():
    
     GPIO.setmode(GPIO.BOARD)
     setPins()
-    for x in range(0, numOfRevolution):
-    	transverseSequence()
+    try:
+    	for x in range(0, numOfRevolution):
+    	    transverseSequence()
         
-        # Clockwise motion to close
-        indexOfStepSequence += 1
+            # Clockwise motion to close
+            indexOfStepSequence += 1
 	
-        if (indexOfStepSequence > 7):
-            indexOfStepSequence = 0
+            if (indexOfStepSequence > 7):
+            	indexOfStepSequence = 0
 
-        time.sleep(speedOfRevolution)
-    GPIO.cleanup()
-
+            time.sleep(speedOfRevolution)
+    finally:
+	GPIO.cleanup()
